@@ -4,6 +4,7 @@ import { Button } from "@heroui/button";
 import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card";
 import { Image } from "@heroui/image";
 import { BreadcrumbItem, Breadcrumbs, Divider, Pagination } from "@heroui/react";
+import router from "next/router";
 import { useEffect, useState } from "react";
 import apiService from "./api/hello";
 
@@ -29,11 +30,10 @@ export default function IndexPage() {
   }
 
 
-  const advancedPageMovies = async () => {
-    setPage(n => n + 1)
-    console.log('pagina:', page)
-    console.log('console.log', selectedGenrer)
-  }
+
+  const viewDetailsMovie = (id: number) => {
+    router.push(`/about/${id}`);
+  };
 
   async function getMoviesByPage() {
     const response = await apiService.get('/discover/movie', {
@@ -125,6 +125,7 @@ export default function IndexPage() {
                 radius="lg"
                 size="sm"
                 variant="flat"
+                onClick={() => viewDetailsMovie(item.id)}
               >
                 Ver detalhes
               </Button>
@@ -135,7 +136,7 @@ export default function IndexPage() {
       </div >
       <div className="w-full  flex justify-center my-12">
 
-        <Button
+        {/* <Button
           className="text-tiny text-white bg-black /20"
           color="default"
           radius="lg"
@@ -144,7 +145,19 @@ export default function IndexPage() {
           onClick={() => advancedPageMovies()}
         >
           Ver Mais
-        </Button>
+        </Button> */}
+
+
+        <div className="flex justify-center sm:justify-end">
+          <Pagination
+            onChange={(newPage) => setPage(newPage)}
+            initialPage={1}
+            page={page}
+            total={100}
+            size="sm"
+            showControls
+          />
+        </div>
       </div>
 
 
