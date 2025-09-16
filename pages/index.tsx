@@ -3,42 +3,95 @@ import DefaultLayout from "@/layouts/default";
 import { Button } from "@heroui/button";
 import { Card, CardBody, CardFooter, CardHeader } from "@heroui/card";
 import { Image } from "@heroui/image";
-import { Divider } from "@heroui/react";
+import { BreadcrumbItem, Breadcrumbs, Divider, Pagination } from "@heroui/react";
 import { useEffect, useState } from "react";
+import apiService from "./api/hello";
 
 export default function IndexPage() {
-  const [movies, setMovies] = useState([]);
+  const [movies, setMovies] = useState<any[]>([]);
+  const [genres, setGenres] = useState<{ id: number, name: string }[]>([])
+  const [selectedGenrer, setSelectedGenrer] = useState('')
+  const [page, setPage] = useState(1)
+
 
   useEffect(() => {
-    movieList()
+    getMoviesByPage()
+  }, [selectedGenrer, page])
+
+  useEffect(() => {
+    getGenres()
   }, [])
 
-  async function movieList() {
-    const url = 'https://api.themoviedb.org/3/discover/movie?include_adult=true&include_video=true&language=pt-BR&page=1&sort_by=popularity.desc';
-    const options = {
-      method: 'GET',
-      headers: {
-        accept: 'application/json',
-        Authorization: 'Bearer eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJhYjBlMjM1ODBhZWMzMWIxY2VlNDY5ZDNkNmI4ZjE4NyIsIm5iZiI6MTc1NzcwNzYyNC4xMjgsInN1YiI6IjY4YzQ3ZDY4N2ZhNzA5NGU1MGMzYjFjYiIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.GLyE88Fli13FhSZAuNTIVZpKtxNV_ip1_xEqnRGGum8'
-      }
-    };
 
-    fetch(url, options)
-      .then(res => res.json())
-      .then(json => setMovies(json.results))
-      .catch(err => console.error(err))
-      .finally(() => console.log(movies))
+  const filterByGenrer = (id: any) => {
+    setSelectedGenrer(id)
+    console.log('console.log', selectedGenrer)
   }
 
 
+  const advancedPageMovies = async () => {
+    setPage(n => n + 1)
+    console.log('pagina:', page)
+    console.log('console.log', selectedGenrer)
+  }
+
+  async function getMoviesByPage() {
+    const response = await apiService.get('/discover/movie', {
+      params: {
+        include_adult: true,
+        include_video: true,
+        language: 'pt-BR',
+        page: page,
+        sort_by: 'popularity.desc',
+        with_genres: selectedGenrer
+      }
+    })
+    setMovies(response.data.results)
+  }
+
+  async function getGenres() {
+    const response = await apiService.get('/genre/movie/list', {
+      params: { language: "pt" }
+    })
+    console.log(response)
+    setGenres(response.data.genres)
+  }
 
   return (
     <DefaultLayout>
-      <div className="flex flex-wrap gap-4">
+      <div className=" flex flex-row gap-4 flex-wrap my-8  ">
+        {genres.map((itemsGenres: any) => (
 
+          <Button radius="full" variant={selectedGenrer === itemsGenres.id ? "solid" : "light"}
+            color={selectedGenrer === itemsGenres.id ? "primary" : "default"} onClick={() => filterByGenrer(itemsGenres.id)}>{itemsGenres.name} </Button>
+        ))}
+        <Button onClick={() => setSelectedGenrer('')} variant="flat" color='warning' radius="full" >Todos</Button>
+      </div>
+
+      <div className="my-6 flex flex-col sm:flex-row sm:justify-between gap-4">
+        <div className="flex">
+          <Breadcrumbs size="sm">
+            <BreadcrumbItem>Home</BreadcrumbItem>
+            <BreadcrumbItem>Filmes</BreadcrumbItem>
+            <BreadcrumbItem>{genres.find(g => g.id === Number(selectedGenrer))?.name || 'Todos'}</BreadcrumbItem>
+          </Breadcrumbs>
+        </div>
+        <div className="flex justify-center sm:justify-end">
+          <Pagination
+            onChange={(newPage) => setPage(newPage)}
+            initialPage={1}
+            page={page}
+            total={100}
+            size="sm"
+            showControls
+          />
+        </div>
+      </div>
+
+      <div className="flex flex-wrap gap-4">
         {movies.map((item: any, index) => (
           <Card key={index} isFooterBlurred className="w-full sm:w-[calc(50%-0.5rem)] lg:w-[calc(25%-0.75rem)] border-none relative" radius="lg">
-            <CardHeader className="flex gap-3 h-20">
+            <CardHeader className="flex  gap-3 h-20">
               <Image
                 alt="heroui logo"
                 height={40}
@@ -80,6 +133,20 @@ export default function IndexPage() {
         ))
         }
       </div >
+      <div className="w-full  flex justify-center my-12">
+
+        <Button
+          className="text-tiny text-white bg-black /20"
+          color="default"
+          radius="lg"
+          size="md"
+          variant="shadow"
+          onClick={() => advancedPageMovies()}
+        >
+          Ver Mais
+        </Button>
+      </div>
+
 
     </DefaultLayout >
   );
